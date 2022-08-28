@@ -1,0 +1,81 @@
+<style>
+  canvas {
+    display: block;
+    margin: auto;
+    outline: 1px solid black;
+    width: 500px;
+    height: 500px;
+  }
+</style>
+
+<body>
+  <canvas width="500" height="500"></canvas>
+</body>
+
+<script>
+  // game data
+  let mobs = {};
+
+  // draw stuff
+  const canvas = document.getElementsByTagName("canvas")[0];
+  const ctx = canvas.getContext("2d");
+
+  const draw = () => {
+    // background "grass"
+    ctx.fillStyle = "green";
+    ctx.fillRect(0, 0, 500, 500);
+
+    // draw grid
+    ctx.fillStyle = "black";
+    for (let x = 1; x < 10; x++) {
+      ctx.moveTo(x * 50, 0);
+      ctx.lineTo(x * 50, 500);
+      ctx.stroke();
+    }
+
+    for (let y = 1; y < 10; y++) {
+      ctx.moveTo(0, y * 50);
+      ctx.lineTo(500, y * 50);
+      ctx.stroke();
+    }
+
+    // draw mobs
+    Object.keys(mobs).forEach(key => {
+      const mob = mobs[key];
+      ctx.fillStyle = "brown";
+      ctx.fillRect(mob[0] * 50 + 10, mob[1] * 50 + 10, 30, 30);
+    });
+  };
+
+  draw();
+
+  // socket stuff
+  const ws = new WebSocket("ws://localhost:3000/ws");
+  ws.onopen = () => {
+    console.log("connected");
+  };
+
+  ws.onclose = () => {
+    console.log("close");
+  };
+
+  ws.onerror = () => {
+    console.log("error");
+  };
+
+  ws.onmessage = (event) => {
+    console.log(event.data);
+    const arr = JSON.parse(event.data);
+    arr.forEach(dat => {
+      const { id, x, y } = dat;
+      // translate coordinates
+      mobs[id] = [Number(x), Number(y)];
+    });
+    
+    if (arr.length > 0) {
+      draw();
+    }
+  };
+
+
+</script>
