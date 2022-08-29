@@ -8,6 +8,17 @@ class Entity {
         // resource name (ex: "chicken")
         this.asset = asset;
         this.id = uuid();
+        // id of owning chunk
+        /** @type string */
+        this.chunk_id = null;
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      position: this.position,
+      asset: this.asset
+    };
   }
 }
 
@@ -24,7 +35,9 @@ export class Resource {
   }
 
   clone() {
-    return new Resource(this.entity.position, this.entity.asset, this.info);
+    const e = new Resource(this.entity.position, this.entity.asset, this.info);
+    e.entity.chunk_id = this.entity.chunk_id;
+    return e;
   }
 }
 
@@ -34,6 +47,9 @@ export class Mob {
 
     // mob info, ex: loot and stats
     this.info = info;
+
+    // points to move towards each tick
+    this.path = [];
   }
 
   getType() {
@@ -41,7 +57,20 @@ export class Mob {
   }
 
   clone() {
-    return new Mob(this.entity.position, this.entity.asset, this.info);
+    const e = new Mob(this.entity.position, this.entity.asset, this.info);
+    e.entity.chunk_id = this.entity.chunk_id;
+    return e;
+  }
+
+  toJSON() {
+    return {
+      entity: this.entity,
+      info: {
+        level: this.info.level,
+        health: this.info.health
+      },
+      path: this.path
+    }
   }
 }
 

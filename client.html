@@ -43,7 +43,19 @@
     Object.keys(mobs).forEach(key => {
       const mob = mobs[key];
       ctx.fillStyle = "brown";
-      ctx.fillRect(mob[0] * 50 + 10, mob[1] * 50 + 10, 30, 30);
+
+      // draw mob
+      const [x, y] = mob.position;
+      ctx.fillRect(x * 50 + 10, y * 50 + 10, 30, 30);
+
+      // draw mob path
+      if (mob.path) {
+        console.log(mob.path);
+        ctx.fillStyle = "red";
+        mob.path.forEach(coord => {
+          ctx.fillRect(coord[0] * 50, coord[1] * 50, 10, 10);
+        });
+      }
     });
   };
 
@@ -65,17 +77,33 @@
 
   ws.onmessage = (event) => {
     console.log(event.data);
-    const arr = JSON.parse(event.data);
-    arr.forEach(dat => {
-      const { id, x, y } = dat;
-      // translate coordinates
-      mobs[id] = [Number(x), Number(y)];
-    });
-    
-    if (arr.length > 0) {
-      draw();
-    }
+    const stuff = JSON.parse(event.data);
+    doTypeThing(stuff);
   };
 
+  // TODO handle chunks
+  // TODO when updating a not found entity, ask server for full entity state
+  const doTypeThing = (events) => {
+    events.forEach(event => {
+      switch (event?.type) {
+        case "entity-spawn": {
+          mobs[event.data.entity.id] = {
+            position: event.data.entity.position,
+            path: event.data.path
+          };
+          break;
+        }
+
+        case "entity-path": {
+          mobs[event.data.id].path = event.data.path;
+          break;
+        }
+      }
+    });
+
+    draw();
+  };
+
+  // TODO instead of player client, create observer client instead
 
 </script>

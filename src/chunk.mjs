@@ -1,6 +1,7 @@
 import Spawner from "./spawner.mjs";
 import {Mob, Resource, Loot} from "./entity.mjs";
 import {v4 as uuid} from "uuid";
+import {Paths} from "./paths.mjs";
 
 // chunks are assumed to be 10x10 grid
 export default class Chunk {
@@ -12,6 +13,8 @@ export default class Chunk {
    * @param {Array<Obstacle>} obstacles 
    */
   constructor(name, spawners, coordinate, obstacles) {
+    this.id = uuid();
+    
     /** 
      * name of map chunk
      * 
@@ -25,6 +28,9 @@ export default class Chunk {
      * @type Array<Spawner>
      */
     this.spawners = spawners;
+    this.spawners.forEach(s => {
+      s.entity.entity.chunk_id = this.id;
+    });
 
     /**
      *  map width and height, all rectangles for now
@@ -40,7 +46,14 @@ export default class Chunk {
      */
     this.obstacles = obstacles;
 
-    this.id = uuid();
+    this.paths = new Paths(obstacles.map(o => o.position));
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      coordinate: this.coordinate,
+    };
   }
 }
 
@@ -114,6 +127,7 @@ export const defaultChunks = () => {
     ],
     [0, 0], // starting point
     [
+      new Obstacle("stump", [5, 5]), // stump for tree resource
       ...[
         [4, 7],
         [5, 7],
@@ -148,8 +162,38 @@ export const defaultChunks = () => {
     [] // no environmental obstacles in map 2
   );
 
+  const third_chunk = new Chunk(
+    "Area 3",
+    [
+      // lone chicken in area 3, should not send updates for players in the starting area
+      new Spawner(
+        new Mob(
+          [6, 7],
+          "chicken",
+          {
+            level: 1,
+            health: 3,
+            loot: [
+              // TODO make mob loot pools/tables so this doesn't need to be replicated
+              new Loot("feather", [3, 8], 1),
+              new Loot("bones", [1, 1], 1),
+              new Loot("eggs", [1, 3], 0.3),
+            ]
+          }
+        ),
+        {
+          ticks: 10, // spawn chicken every 5 seconds
+          spawn_cap: 1,
+        }
+      )
+    ],
+    [2, 0],
+    []
+  );
+
   return [
     starting_chunk,
-    second_chunk
+    second_chunk,
+    third_chunk
   ];
 };

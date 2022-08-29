@@ -1,5 +1,4 @@
 import {v4 as uuid} from "uuid";
-import logger from "./log.mjs";
 
 const logKey = "spawners";
 
@@ -20,16 +19,19 @@ export default class Spawner {
   }
 
   tick() {
+    let new_ent = null;
+
     this.tick_count++;
     if (this.tick_count >= this.spawn_data.ticks) {
       // tick over whether or not anything happens
       this.tick_count = 0;
-      logger.log(logKey, `${this.id} tick`)
       if (this.spawned.length < this.spawn_data.spawn_cap) {
-        logger.log(logKey, `${this.id} spawning entity ${this.entity.getType()}/${this.entity.entity.asset}`);
-        this.spawned.push(this.entity.clone());
+        new_ent = this.entity.clone();
+        this.spawned.push(new_ent);
       }
     }
+
+    return new_ent;
   }
 
   _validate() {

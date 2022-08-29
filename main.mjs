@@ -19,10 +19,12 @@ router.register(async function (r) {
   });
 });
 
-process.exit(0);
-
 setInterval(() => {
-  game.chunkStep();
+  // spawn & move things, collect changes for active chunks
+  const updates = game.chunkStep();
+
+  // send relevant updates to players
+  game.updatePlayers(updates);
 }, 500);
 
 //
@@ -40,26 +42,3 @@ router.get("/", async (req, res) => {
   }
 })();
 
-/**
- * ideas
- * 
- * - first scope
- * - simple game with simple interaction
- * - receive input from websocket
- * - sections of map managed separately
- * - initial scope - 1 or 2 maps, anonymous player just moves around
- * - 2 ticks per second
- * - second scope
- * - monsters walk, monsters detect, players register movement changes on tick
- * - process and override tick actions in websocket, submit on tick
- * - third scope
- * - monster -> player, player -> monster changes to a battle mode that other players and monsters can enter
- * - direct client & server battle?
- * 
- * immediate next
- * 
- * - simple renderer for chunk 0 in client
- * - simple grid pathing
- * - path finder chooses mobs in active chunks to spawn stuff
- * - anonymous player can join and walk around
- */

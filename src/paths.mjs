@@ -45,7 +45,7 @@ class GridPoint {
   }
 }
 
-class Paths {
+export class Paths {
   constructor(obstacles=[]) {
 
     /** @type Array<Array<GridPoint>> */
@@ -77,6 +77,11 @@ class Paths {
     const start_node = this.grid[start[0]][start[1]];
     const end_node = this.grid[end[0]][end[1]];
 
+    // cannot path into a solid node
+    if (end_node.solid) {
+      return null;
+    }
+
     const open_set = [start_node];
     const closed_set = [];
     const path = [];
@@ -100,7 +105,7 @@ class Paths {
           path.push(tmp.parent);
           tmp = tmp.parent;
         }
-        return path.reverse().map(n => `${n.x}, ${n.y}`);
+        return path.reverse().map(n => [n.x, n.y]);
       }
 
       //
@@ -128,8 +133,3 @@ class Paths {
     return null; // no path
   }
 }
-
-const foop = new Paths([
-  [3, 1]
-]);
-console.log(foop.search([1, 1], [5, 1]));
