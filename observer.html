@@ -18,6 +18,7 @@
 <script>
   // game data
   let mobs = {};
+  let obstacles = {};
 
   // draw stuff
   const canvas = document.getElementsByTagName("canvas")[0];
@@ -42,11 +43,26 @@
       ctx.stroke();
     }
 
+    // draw obstacles
+    Object.keys(obstacles).forEach(key => {
+      const chunk_obs = obstacles[key];
+      // blue square = obstacle (ex: water, tree stump, etc)
+      ctx.fillStyle = "blue";
+      chunk_obs.forEach(obs => {
+        const [x, y] = obs.position;
+        const offset_x = 500 * obs.chunk.coordinate[0];
+        const offset_y = 500 * obs.chunk.coordinate[1];
+        const x_pos = x * 50 + offset_x;
+        const y_pos = y * 50 + offset_y;
+        ctx.fillRect(x_pos, y_pos, 50, 50);
+      });
+    });
+
     // draw mobs
     Object.keys(mobs).forEach(key => {
       const mob = mobs[key];
-      // brown square = npc
-      ctx.fillStyle = "brown";
+      // brown square = npc, yellow square = resource
+      ctx.fillStyle = mob.type == "mob" ? "brown" : "yellow";
 
       // draw mob
       const [x, y] = mob.position;
@@ -83,7 +99,7 @@
   };
 
   ws.onmessage = (event) => {
-    console.log(event.data);
+    // console.log(event.data);
     const stuff = JSON.parse(event.data);
     doTypeThing(stuff);
   };
@@ -93,21 +109,40 @@
   const doTypeThing = (events) => {
     events.forEach(event => {
       switch (event?.type) {
+        //
         case "test": {
           console.log("received test message from server");
           break;
         }
+        //
         case "entity-spawn": {
           mobs[event.data.entity.id] = {
             position: event.data.entity.position,
             path: event.data.path,
-            chunk: event.chunk
+            chunk: event.chunk,
+            type: event.data.type
           };
           break;
         }
-
+        //
         case "entity-path": {
           mobs[event.data.id].path = event.data.path;
+          break;
+        }
+        //
+        case "chunk-data": {
+          obstacles[event.chunk.id] = event.obstacles.map(obj => {
+            return {
+              ...obj,
+              // TODO organize mobs and obstacles etc inside chunks, similar to server structure
+              chunk: event.chunk
+            };
+          });
+          break;
+        }
+        //
+        default: {
+          console.log(`unhandled event ${event?.type}:`, event);
           break;
         }
       }

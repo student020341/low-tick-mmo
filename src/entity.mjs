@@ -39,6 +39,14 @@ export class Resource {
     e.entity.chunk_id = this.entity.chunk_id;
     return e;
   }
+
+  toJSON() {
+    return {
+      entity: this.entity,
+      info: this.info,
+      type: this.getType()
+    };
+  }
 }
 
 export class Mob {
@@ -69,7 +77,8 @@ export class Mob {
         level: this.info.level,
         health: this.info.health
       },
-      path: this.path
+      path: this.path,
+      type: this.getType()
     }
   }
 }

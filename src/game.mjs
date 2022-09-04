@@ -21,10 +21,21 @@ export default class Game {
     const player = this.players[id];
     const spaces = [player.chunk, ...coordsAround(player.chunk)];
     const chunks = this.chunks.filter(c => spaces.some(s => cmpCoords(s, c.coordinate)));
-    const game_state = chunks.reduce((all_ents, chunk) => {
+    const game_state = chunks.reduce((updates, chunk) => {
+      // spawned entities
       const spawned = chunk.spawners.reduce((spawned, spawner) => spawned.concat(spawner.spawned), [])
         .map(e => ({chunk, type: "entity-spawn", data: e}));
-      return all_ents.concat(spawned);
+
+      // chunk obstacles
+      const obstacles = {
+        chunk,
+        type: "chunk-data",
+        obstacles: chunk.obstacles
+      };
+
+      return updates
+        .concat(spawned)
+        .concat(obstacles);
     }, []);
 
     player.ws.send(JSON.stringify(game_state));
