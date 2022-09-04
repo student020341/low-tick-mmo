@@ -1,3 +1,6 @@
+<!--
+  A "player" client that observes a chunk and can move between chunks
+-->
 <style>
   canvas {
     display: block;
@@ -42,15 +45,19 @@
     // draw mobs
     Object.keys(mobs).forEach(key => {
       const mob = mobs[key];
+      // brown square = npc
       ctx.fillStyle = "brown";
 
       // draw mob
       const [x, y] = mob.position;
-      ctx.fillRect(x * 50 + 10, y * 50 + 10, 30, 30);
+      const offset_x = 10 + 500 * mob.chunk.coordinate[0];
+      const offset_y = 10 + 500 * mob.chunk.coordinate[1];
+      const x_pos = x * 50 + offset_x;
+      const y_pos = y * 50 + offset_y; 
+      ctx.fillRect(x_pos, y_pos, 30, 30);
 
       // draw mob path
       if (mob.path) {
-        console.log(mob.path);
         ctx.fillStyle = "red";
         mob.path.forEach(coord => {
           ctx.fillRect(coord[0] * 50, coord[1] * 50, 10, 10);
@@ -86,10 +93,15 @@
   const doTypeThing = (events) => {
     events.forEach(event => {
       switch (event?.type) {
+        case "test": {
+          console.log("received test message from server");
+          break;
+        }
         case "entity-spawn": {
           mobs[event.data.entity.id] = {
             position: event.data.entity.position,
-            path: event.data.path
+            path: event.data.path,
+            chunk: event.chunk
           };
           break;
         }
@@ -103,6 +115,12 @@
 
     draw();
   };
+
+  document.addEventListener("click", () => {
+    ws.send(JSON.stringify({
+      type: "test"
+    }));
+  });
 
   // TODO instead of player client, create observer client instead
 

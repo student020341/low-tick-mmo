@@ -1,4 +1,5 @@
 import Chunk, { coordsAround, defaultChunks } from "./chunk.mjs";
+import { cmpCoords } from "./utils.mjs";
 
 export default class Game {
   constructor() {
@@ -16,7 +17,45 @@ export default class Game {
       position: [1, 1]
     };
 
-    // TODO send state of relevant grid(s) to player
+    // get any existing data to send to player
+    const player = this.players[id];
+    const spaces = [player.chunk, ...coordsAround(player.chunk)];
+    const chunks = this.chunks.filter(c => spaces.some(s => cmpCoords(s, c.coordinate)));
+    const game_state = chunks.reduce((all_ents, chunk) => {
+      const spawned = chunk.spawners.reduce((spawned, spawner) => spawned.concat(spawner.spawned), [])
+        .map(e => ({chunk, type: "entity-spawn", data: e}));
+      return all_ents.concat(spawned);
+    }, []);
+
+    player.ws.send(JSON.stringify(game_state));
+  }
+
+  playerMessage(id, raw) {
+    const player = this.players[id];
+    if (!player) {
+      console.error(`player ${id} does not exist`);
+      return;
+    }
+
+    let msg;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch(e) {
+      console.error(`playerMessage: invalid json: ${raw.toString()}`);
+      return;
+    }
+
+    if (!msg.type) {
+      console.error(`playerMessage: invalid json: ${raw.toString()}`);
+    }
+
+    switch(msg.type) {
+      case "test": {
+        console.log(`received test message from player ${id}`);
+        player.ws.send(JSON.stringify([{type: "test"}]));
+        break;
+      }
+    }
   }
 
   playerLeave(id) {
@@ -49,7 +88,7 @@ export default class Game {
       chunk.spawners.forEach(s => {
         let new_ent = s.tick();
         if (new_ent != null) {
-          updates.push({chunk, type: "entity-spawn", data: new_ent});
+          updates.push({ chunk, type: "entity-spawn", data: new_ent });
         }
       });
 
@@ -76,7 +115,7 @@ export default class Game {
             // check for potentially unreachable destination (no good path or target space is solid)
             if (path != null) {
               mob.path = path;
-              updates.push({chunk, type: "entity-path", data: {id: mob.entity.id, path}});
+              updates.push({ chunk, type: "entity-path", data: { id: mob.entity.id, path } });
             }
           }
         }

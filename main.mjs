@@ -13,6 +13,10 @@ router.register(async function (r) {
     const id = uuid();
     game.playerJoin(id, conn.socket);
 
+    conn.socket.on("message", (msg) => {
+      game.playerMessage(id, msg);
+    });
+
     conn.socket.on("close", () => {
       game.playerLeave(id);
     });
